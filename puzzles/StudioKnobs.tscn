@@ -1,0 +1,118 @@
+[gd_scene format=2]
+
+[node name="StudioKnobs" type="Node2D"]
+
+[node name="VSlider" type="VSlider" parent="."]
+margin_left = 8.0
+margin_top = 64.0
+margin_right = 24.0
+margin_bottom = 232.0
+max_value = 10.0
+tick_count = 10
+ticks_on_borders = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VSlider2" type="VSlider" parent="."]
+margin_left = 48.0
+margin_top = 64.0
+margin_right = 64.0
+margin_bottom = 232.0
+tick_count = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VSlider3" type="VSlider" parent="."]
+margin_left = 88.0
+margin_top = 64.0
+margin_right = 104.0
+margin_bottom = 232.0
+tick_count = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VSlider4" type="VSlider" parent="."]
+margin_left = 136.0
+margin_top = 144.0
+margin_right = 152.0
+margin_bottom = 232.0
+tick_count = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VSlider5" type="VSlider" parent="."]
+margin_left = 184.0
+margin_top = 144.0
+margin_right = 200.0
+margin_bottom = 232.0
+tick_count = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VSlider6" type="VSlider" parent="."]
+margin_left = 232.0
+margin_top = 144.0
+margin_right = 248.0
+margin_bottom = 232.0
+tick_count = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VSlider7" type="VSlider" parent="."]
+margin_left = 280.0
+margin_top = 144.0
+margin_right = 296.0
+margin_bottom = 232.0
+tick_count = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VSlider8" type="VSlider" parent="."]
+margin_left = 336.0
+margin_top = 144.0
+margin_right = 352.0
+margin_bottom = 232.0
+tick_count = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HSlider" type="HSlider" parent="."]
+margin_left = 376.0
+margin_top = 72.0
+margin_right = 496.0
+margin_bottom = 88.0
+tick_count = 10
+ticks_on_borders = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HSlider2" type="HSlider" parent="."]
+margin_left = 376.0
+margin_top = 112.0
+margin_right = 496.0
+margin_bottom = 128.0
+tick_count = 10
+ticks_on_borders = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HSlider3" type="HSlider" parent="."]
+margin_left = 376.0
+margin_top = 152.0
+margin_right = 496.0
+margin_bottom = 168.0
+tick_count = 10
+ticks_on_borders = true
+__meta__ = {
+"_edit_use_anchors_": false
+}

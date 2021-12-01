@@ -1,0 +1,259 @@
+[gd_scene load_steps=16 format=2]
+
+[ext_resource path="res://puzzles/MovieCover.tscn" type="PackedScene" id=1]
+[ext_resource path="res://puzzles/MovieSorting.gd" type="Script" id=2]
+[ext_resource path="res://assets/movie_covers/apocalypse-now.jpg" type="Texture" id=3]
+[ext_resource path="res://assets/movie_covers/star_wars.jpg" type="Texture" id=4]
+[ext_resource path="res://assets/movie_covers/godfather.jpg" type="Texture" id=5]
+[ext_resource path="res://assets/movie_covers/shawshank.jpg" type="Texture" id=6]
+[ext_resource path="res://assets/shelf_empty.png" type="Texture" id=7]
+[ext_resource path="res://assets/movie_covers/silence-of-the-lambs.jpg" type="Texture" id=8]
+[ext_resource path="res://assets/movie_covers/jaws.jpg" type="Texture" id=9]
+[ext_resource path="res://assets/movie_covers/titanic.jpg" type="Texture" id=10]
+[ext_resource path="res://puzzles/Dropzone.tscn" type="PackedScene" id=11]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+
+uniform vec4 color : hint_color = vec4(1.0);
+uniform float width : hint_range(0, 10) = 1.0;
+uniform int pattern : hint_range(0, 2) = 0; // diamond, circle, square
+uniform bool inside = false;
+uniform bool add_margins = true; // only useful when inside is false
+
+void vertex() {
+	if (add_margins) {
+		VERTEX += (UV * 2.0 - 1.0) * width;
+	}
+}
+
+bool hasContraryNeighbour(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
+	for (float i = -ceil(width); i <= ceil(width); i++) {
+		float x = abs(i) > width ? width * sign(i) : i;
+		float offset;
+		
+		if (pattern == 0) {
+			offset = width - abs(x);
+		} else if (pattern == 1) {
+			offset = floor(sqrt(pow(width + 0.5, 2) - x * x));
+		} else if (pattern == 2) {
+			offset = width;
+		}
+		
+		for (float j = -ceil(offset); j <= ceil(offset); j++) {
+			float y = abs(j) > offset ? offset * sign(j) : j;
+			vec2 xy = uv + texture_pixel_size * vec2(x, y);
+			
+			if ((xy != clamp(xy, vec2(0.0), vec2(1.0)) || texture(texture, xy).a == 0.0) == inside) {
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+void fragment() {
+	vec2 uv = UV;
+	
+	if (add_margins) {
+		vec2 texture_pixel_size = vec2(1.0) / (vec2(1.0) / TEXTURE_PIXEL_SIZE + vec2(width * 2.0));
+		
+		uv = (uv - texture_pixel_size * width) * TEXTURE_PIXEL_SIZE / texture_pixel_size;
+		
+		if (uv != clamp(uv, vec2(0.0), vec2(1.0))) {
+			COLOR.a = 0.0;
+		} else {
+			COLOR = texture(TEXTURE, uv);
+		}
+	} else {
+		COLOR = texture(TEXTURE, uv);
+	}
+	
+	if ((COLOR.a > 0.0) == inside && hasContraryNeighbour(uv, TEXTURE_PIXEL_SIZE, TEXTURE)) {
+		COLOR.rgb = inside ? mix(COLOR.rgb, color.rgb, color.a) : color.rgb;
+		COLOR.a += (1.0 - COLOR.a) * color.a;
+	}
+}"
+
+[sub_resource type="ShaderMaterial" id=2]
+resource_local_to_scene = true
+shader = SubResource( 1 )
+shader_param/color = Color( 1, 1, 1, 1 )
+shader_param/width = 0.0
+shader_param/pattern = 0
+shader_param/inside = false
+shader_param/add_margins = true
+
+[sub_resource type="Shader" id=3]
+code = "shader_type canvas_item;
+
+uniform vec4 color : hint_color = vec4(1.0);
+uniform float width : hint_range(0, 10) = 1.0;
+uniform int pattern : hint_range(0, 2) = 0; // diamond, circle, square
+uniform bool inside = false;
+uniform bool add_margins = true; // only useful when inside is false
+
+void vertex() {
+	if (add_margins) {
+		VERTEX += (UV * 2.0 - 1.0) * width;
+	}
+}
+
+bool hasContraryNeighbour(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
+	for (float i = -ceil(width); i <= ceil(width); i++) {
+		float x = abs(i) > width ? width * sign(i) : i;
+		float offset;
+		
+		if (pattern == 0) {
+			offset = width - abs(x);
+		} else if (pattern == 1) {
+			offset = floor(sqrt(pow(width + 0.5, 2) - x * x));
+		} else if (pattern == 2) {
+			offset = width;
+		}
+		
+		for (float j = -ceil(offset); j <= ceil(offset); j++) {
+			float y = abs(j) > offset ? offset * sign(j) : j;
+			vec2 xy = uv + texture_pixel_size * vec2(x, y);
+			
+			if ((xy != clamp(xy, vec2(0.0), vec2(1.0)) || texture(texture, xy).a == 0.0) == inside) {
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+void fragment() {
+	vec2 uv = UV;
+	
+	if (add_margins) {
+		vec2 texture_pixel_size = vec2(1.0) / (vec2(1.0) / TEXTURE_PIXEL_SIZE + vec2(width * 2.0));
+		
+		uv = (uv - texture_pixel_size * width) * TEXTURE_PIXEL_SIZE / texture_pixel_size;
+		
+		if (uv != clamp(uv, vec2(0.0), vec2(1.0))) {
+			COLOR.a = 0.0;
+		} else {
+			COLOR = texture(TEXTURE, uv);
+		}
+	} else {
+		COLOR = texture(TEXTURE, uv);
+	}
+	
+	if ((COLOR.a > 0.0) == inside && hasContraryNeighbour(uv, TEXTURE_PIXEL_SIZE, TEXTURE)) {
+		COLOR.rgb = inside ? mix(COLOR.rgb, color.rgb, color.a) : color.rgb;
+		COLOR.a += (1.0 - COLOR.a) * color.a;
+	}
+}"
+
+[sub_resource type="ShaderMaterial" id=4]
+resource_local_to_scene = true
+shader = SubResource( 3 )
+shader_param/color = Color( 1, 1, 1, 1 )
+shader_param/width = 0.0
+shader_param/pattern = 0
+shader_param/inside = false
+shader_param/add_margins = true
+
+[node name="MovieSorting" type="Node2D"]
+script = ExtResource( 2 )
+
+[node name="ShelfEmpty" type="Sprite" parent="."]
+position = Vector2( 264, 296 )
+scale = Vector2( 13, 13 )
+texture = ExtResource( 7 )
+
+[node name="Zones" type="Node2D" parent="."]
+position = Vector2( 48, -32 )
+
+[node name="Dropzone" parent="Zones" instance=ExtResource( 11 )]
+position = Vector2( 40, 200 )
+year_expected = 1998
+
+[node name="Dropzone2" parent="Zones" instance=ExtResource( 11 )]
+position = Vector2( 136, 200 )
+
+[node name="Dropzone3" parent="Zones" instance=ExtResource( 11 )]
+position = Vector2( 232, 200 )
+
+[node name="Dropzone4" parent="Zones" instance=ExtResource( 11 )]
+position = Vector2( 88, 200 )
+year_expected = 1998
+
+[node name="Dropzone5" parent="Zones" instance=ExtResource( 11 )]
+position = Vector2( 184, 200 )
+
+[node name="Dropzone6" parent="Zones" instance=ExtResource( 11 )]
+position = Vector2( 280, 200 )
+
+[node name="Dropzone7" parent="Zones" instance=ExtResource( 11 )]
+position = Vector2( 328, 200 )
+
+[node name="Dropzone8" parent="Zones" instance=ExtResource( 11 )]
+position = Vector2( 376, 200 )
+
+[node name="Covers" type="Node2D" parent="."]
+
+[node name="MovieCover" parent="Covers" instance=ExtResource( 1 )]
+material = SubResource( 2 )
+position = Vector2( 112, 56 )
+
+[node name="MovieCover2" parent="Covers" instance=ExtResource( 1 )]
+material = SubResource( 4 )
+position = Vector2( 272, 72 )
+
+[node name="Sprite" parent="Covers/MovieCover2" index="0"]
+texture = ExtResource( 5 )
+
+[node name="MovieCover3" parent="Covers" instance=ExtResource( 1 )]
+material = SubResource( 4 )
+position = Vector2( 440, 64 )
+
+[node name="Sprite" parent="Covers/MovieCover3" index="0"]
+texture = ExtResource( 9 )
+
+[node name="MovieCover4" parent="Covers" instance=ExtResource( 1 )]
+material = SubResource( 4 )
+position = Vector2( 360, 72 )
+
+[node name="Sprite" parent="Covers/MovieCover4" index="0"]
+texture = ExtResource( 3 )
+
+[node name="MovieCover5" parent="Covers" instance=ExtResource( 1 )]
+material = SubResource( 4 )
+position = Vector2( 216, 64 )
+
+[node name="Sprite" parent="Covers/MovieCover5" index="0"]
+texture = ExtResource( 6 )
+
+[node name="MovieCover6" parent="Covers" instance=ExtResource( 1 )]
+material = SubResource( 4 )
+position = Vector2( 320, 64 )
+
+[node name="Sprite" parent="Covers/MovieCover6" index="0"]
+texture = ExtResource( 4 )
+
+[node name="MovieCover7" parent="Covers" instance=ExtResource( 1 )]
+material = SubResource( 4 )
+position = Vector2( 168, 96 )
+
+[node name="Sprite" parent="Covers/MovieCover7" index="0"]
+texture = ExtResource( 8 )
+
+[node name="MovieCover8" parent="Covers" instance=ExtResource( 1 )]
+material = SubResource( 4 )
+position = Vector2( 400, 80 )
+
+[node name="Sprite" parent="Covers/MovieCover8" index="0"]
+texture = ExtResource( 10 )
+
+[editable path="Covers/MovieCover2"]
+[editable path="Covers/MovieCover3"]
+[editable path="Covers/MovieCover4"]
+[editable path="Covers/MovieCover5"]
+[editable path="Covers/MovieCover6"]
+[editable path="Covers/MovieCover7"]
+[editable path="Covers/MovieCover8"]

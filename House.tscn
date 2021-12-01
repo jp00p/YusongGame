@@ -1,0 +1,407 @@
+[gd_scene load_steps=36 format=2]
+
+[ext_resource path="res://Player.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Walls.tscn" type="PackedScene" id=2]
+[ext_resource path="res://assets/bed.png" type="Texture" id=3]
+[ext_resource path="res://assets/computer-desk.png" type="Texture" id=4]
+[ext_resource path="res://assets/barricade.png" type="Texture" id=5]
+[ext_resource path="res://assets/window.png" type="Texture" id=6]
+[ext_resource path="res://props/Peeker.tscn" type="PackedScene" id=7]
+[ext_resource path="res://items/Poster.tscn" type="PackedScene" id=8]
+[ext_resource path="res://assets/dishwasher.png" type="Texture" id=9]
+[ext_resource path="res://assets/cupboard-small.png" type="Texture" id=10]
+[ext_resource path="res://assets/fridge.png" type="Texture" id=11]
+[ext_resource path="res://Door.tscn" type="PackedScene" id=12]
+[ext_resource path="res://assets/cupboard.png" type="Texture" id=13]
+[ext_resource path="res://assets/dishes.png" type="Texture" id=14]
+[ext_resource path="res://assets/trashcan.png" type="Texture" id=15]
+[ext_resource path="res://assets/microwave.png" type="Texture" id=16]
+[ext_resource path="res://assets/stove.png" type="Texture" id=18]
+[ext_resource path="res://assets/countertop.png" type="Texture" id=19]
+[ext_resource path="res://assets/sink.png" type="Texture" id=20]
+[ext_resource path="res://assets/toaster.png" type="Texture" id=21]
+[ext_resource path="res://items/FrontDoor_TrashCan.tscn" type="PackedScene" id=22]
+[ext_resource path="res://items/Toilet.tscn" type="PackedScene" id=23]
+[ext_resource path="res://OutsideTiles.tscn" type="PackedScene" id=24]
+[ext_resource path="res://characters/Emma.tscn" type="PackedScene" id=25]
+[ext_resource path="res://characters/Mitch.tscn" type="PackedScene" id=26]
+[ext_resource path="res://characters/Wiger.tscn" type="PackedScene" id=27]
+[ext_resource path="res://assets/outside_window_glass2.png" type="Texture" id=28]
+[ext_resource path="res://assets/outside_window_glass2_broken.png" type="Texture" id=29]
+
+[sub_resource type="Shader" id=7]
+resource_local_to_scene = true
+code = "shader_type canvas_item;
+
+uniform vec4 color : hint_color = vec4(1.0);
+uniform float width : hint_range(0, 10) = 1.0;
+uniform int pattern : hint_range(0, 2) = 0; // diamond, circle, square
+uniform bool inside = false;
+uniform bool add_margins = true; // only useful when inside is false
+
+void vertex() {
+	if (add_margins) {
+		VERTEX += (UV * 2.0 - 1.0) * width;
+	}
+}
+
+bool hasContraryNeighbour(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
+	for (float i = -ceil(width); i <= ceil(width); i++) {
+		float x = abs(i) > width ? width * sign(i) : i;
+		float offset;
+		
+		if (pattern == 0) {
+			offset = width - abs(x);
+		} else if (pattern == 1) {
+			offset = floor(sqrt(pow(width + 0.5, 2) - x * x));
+		} else if (pattern == 2) {
+			offset = width;
+		}
+		
+		for (float j = -ceil(offset); j <= ceil(offset); j++) {
+			float y = abs(j) > offset ? offset * sign(j) : j;
+			vec2 xy = uv + texture_pixel_size * vec2(x, y);
+			
+			if ((xy != clamp(xy, vec2(0.0), vec2(1.0)) || texture(texture, xy).a == 0.0) == inside) {
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+void fragment() {
+	vec2 uv = UV;
+	
+	if (add_margins) {
+		vec2 texture_pixel_size = vec2(1.0) / (vec2(1.0) / TEXTURE_PIXEL_SIZE + vec2(width * 2.0));
+		
+		uv = (uv - texture_pixel_size * width) * TEXTURE_PIXEL_SIZE / texture_pixel_size;
+		
+		if (uv != clamp(uv, vec2(0.0), vec2(1.0))) {
+			COLOR.a = 0.0;
+		} else {
+			COLOR = texture(TEXTURE, uv);
+		}
+	} else {
+		COLOR = texture(TEXTURE, uv);
+	}
+	
+	if ((COLOR.a > 0.0) == inside && hasContraryNeighbour(uv, TEXTURE_PIXEL_SIZE, TEXTURE)) {
+		COLOR.rgb = inside ? mix(COLOR.rgb, color.rgb, color.a) : color.rgb;
+		COLOR.a += (1.0 - COLOR.a) * color.a;
+	}
+}"
+
+[sub_resource type="ShaderMaterial" id=8]
+resource_local_to_scene = true
+shader = SubResource( 7 )
+shader_param/color = Color( 1, 1, 1, 1 )
+shader_param/width = 0.0
+shader_param/pattern = 0
+shader_param/inside = false
+shader_param/add_margins = true
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+
+uniform vec4 color : hint_color = vec4(1.0);
+uniform float width : hint_range(0, 10) = 1.0;
+uniform int pattern : hint_range(0, 2) = 0; // diamond, circle, square
+uniform bool inside = false;
+uniform bool add_margins = true; // only useful when inside is false
+
+void vertex() {
+	if (add_margins) {
+		VERTEX += (UV * 2.0 - 1.0) * width;
+	}
+}
+
+bool hasContraryNeighbour(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
+	for (float i = -ceil(width); i <= ceil(width); i++) {
+		float x = abs(i) > width ? width * sign(i) : i;
+		float offset;
+		
+		if (pattern == 0) {
+			offset = width - abs(x);
+		} else if (pattern == 1) {
+			offset = floor(sqrt(pow(width + 0.5, 2) - x * x));
+		} else if (pattern == 2) {
+			offset = width;
+		}
+		
+		for (float j = -ceil(offset); j <= ceil(offset); j++) {
+			float y = abs(j) > offset ? offset * sign(j) : j;
+			vec2 xy = uv + texture_pixel_size * vec2(x, y);
+			
+			if ((xy != clamp(xy, vec2(0.0), vec2(1.0)) || texture(texture, xy).a == 0.0) == inside) {
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+void fragment() {
+	vec2 uv = UV;
+	
+	if (add_margins) {
+		vec2 texture_pixel_size = vec2(1.0) / (vec2(1.0) / TEXTURE_PIXEL_SIZE + vec2(width * 2.0));
+		
+		uv = (uv - texture_pixel_size * width) * TEXTURE_PIXEL_SIZE / texture_pixel_size;
+		
+		if (uv != clamp(uv, vec2(0.0), vec2(1.0))) {
+			COLOR.a = 0.0;
+		} else {
+			COLOR = texture(TEXTURE, uv);
+		}
+	} else {
+		COLOR = texture(TEXTURE, uv);
+	}
+	
+	if ((COLOR.a > 0.0) == inside && hasContraryNeighbour(uv, TEXTURE_PIXEL_SIZE, TEXTURE)) {
+		COLOR.rgb = inside ? mix(COLOR.rgb, color.rgb, color.a) : color.rgb;
+		COLOR.a += (1.0 - COLOR.a) * color.a;
+	}
+}"
+
+[sub_resource type="ShaderMaterial" id=4]
+shader = SubResource( 1 )
+shader_param/color = Color( 1, 0, 0.701961, 1 )
+shader_param/width = 0.0
+shader_param/pattern = 1
+shader_param/inside = false
+shader_param/add_margins = true
+
+[sub_resource type="ShaderMaterial" id=5]
+shader = SubResource( 1 )
+shader_param/color = Color( 1, 0, 0.701961, 1 )
+shader_param/width = 0.0
+shader_param/pattern = 1
+shader_param/inside = false
+shader_param/add_margins = true
+
+[sub_resource type="RectangleShape2D" id=3]
+extents = Vector2( 712, 10 )
+
+[sub_resource type="RectangleShape2D" id=6]
+extents = Vector2( 10.5, 18.5 )
+
+[node name="House" type="Node2D"]
+
+[node name="ColorRect" type="ColorRect" parent="."]
+margin_left = 201.0
+margin_top = 620.0
+margin_right = 334.0
+margin_bottom = 660.0
+mouse_filter = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Peeker" parent="." instance=ExtResource( 7 )]
+position = Vector2( 280, 651 )
+
+[node name="Walls" parent="." instance=ExtResource( 2 )]
+tile_data = PoolIntArray( 2490357, 1, 0, 2490358, 1, 0, 2490359, 1, 0, 2490360, 1, 0, 2490361, 1, 0, 2490362, 1, 0, 2490363, 1, 0, 2490364, 1, 0, 2490365, 1, 0, 2490366, 1, 0, 2490367, 1, 0, 2424832, 1, 0, 2424833, 1, 0, 2424834, 1, 0, 2424835, 1, 0, 2424836, 1, 0, 2424837, 1, 0, 2424838, 1, 0, 2424839, 1, 0, 2424840, 1, 0, 2424841, 1, 0, 2424842, 1, 0, 2424843, 1, 0, 2424844, 1, 0, 2424845, 1, 0, 2424846, 1, 0, 2424847, 1, 0, 2424848, 1, 0, 2424849, 1, 0, 2424850, 1, 0, 2424851, 1, 0, 2424852, 1, 0, 2424853, 1, 0, 2424854, 2, 0, 2424865, 17, 0, 2424866, 17, 0, 2424867, 17, 0, 2424868, 17, 0, 2424869, 17, 0, 2424870, 17, 0, 2424871, 17, 0, 2424872, 17, 0, 2424873, 17, 0, 2424883, 27, 0, 2424884, 34, 0, 2424885, 34, 0, 2424886, 34, 0, 2424887, 34, 0, 2424888, 34, 0, 2424889, 34, 0, 2424890, 34, 0, 2424891, 34, 0, 2424892, 34, 0, 2424893, 34, 0, 2424894, 34, 0, 2424895, 34, 0, 2424896, 34, 0, 2424897, 34, 0, 2424898, 34, 0, 2424899, 34, 0, 2424900, 34, 0, 2424901, 34, 0, 2424902, 34, 0, 2424903, 34, 0, 2424904, 34, 0, 2424905, 28, 0, 2555893, 3, 0, 2555894, 3, 0, 2555895, 3, 0, 2555896, 3, 0, 2555897, 3, 0, 2555898, 3, 0, 2555899, 3, 0, 2555900, 3, 0, 2555901, 3, 0, 2555902, 3, 0, 2555903, 3, 0, 2490368, 3, 0, 2490369, 3, 0, 2490370, 3, 0, 2490371, 3, 0, 2490372, 3, 0, 2490373, 3, 0, 2490374, 3, 0, 2490375, 3, 0, 2490376, 3, 0, 2490377, 3, 0, 2490378, 3, 0, 2490379, 3, 0, 2490380, 3, 0, 2490381, 3, 0, 2490382, 3, 0, 2490383, 3, 0, 2490384, 3, 0, 2490385, 3, 0, 2490386, 3, 0, 2490387, 3, 0, 2490388, 3, 0, 2490389, 3, 0, 2490390, 7, 0, 2490401, 13, 0, 2490402, 13, 0, 2490403, 13, 0, 2490404, 13, 0, 2490405, 13, 0, 2490406, 13, 0, 2490407, 13, 0, 2490408, 13, 0, 2490409, 13, 0, 2490419, 32, 0, 2490420, 31, 0, 2490421, 31, 0, 2490422, 31, 0, 2490423, 31, 0, 2490424, 31, 0, 2490425, 31, 0, 2490426, 31, 0, 2490427, 31, 0, 2490428, 31, 0, 2490429, 31, 0, 2490430, 31, 0, 2490431, 31, 0, 2490432, 31, 0, 2490433, 31, 0, 2490434, 31, 0, 2490435, 31, 0, 2490436, 31, 0, 2490437, 31, 0, 2490438, 31, 0, 2490439, 31, 0, 2490440, 31, 0, 2490441, 33, 0, 2621429, 3, 0, 2621430, 3, 0, 2621431, 3, 0, 2621432, 3, 0, 2621433, 3, 0, 2621434, 3, 0, 2621435, 3, 0, 2621436, 3, 0, 2621437, 3, 0, 2621438, 3, 0, 2621439, 3, 0, 2555904, 3, 0, 2555905, 3, 0, 2555906, 3, 0, 2555907, 3, 0, 2555908, 3, 0, 2555909, 3, 0, 2555910, 3, 0, 2555911, 3, 0, 2555912, 3, 0, 2555913, 3, 0, 2555914, 3, 0, 2555915, 3, 0, 2555916, 3, 0, 2555917, 3, 0, 2555918, 3, 0, 2555919, 3, 0, 2555920, 3, 0, 2555923, 3, 0, 2555924, 3, 0, 2555925, 3, 0, 2555926, 7, 0, 2555937, 13, 0, 2555938, 13, 0, 2555939, 13, 0, 2555940, 13, 0, 2555941, 13, 0, 2555942, 13, 0, 2555943, 13, 0, 2555944, 13, 0, 2555945, 13, 0, 2555955, 32, 0, 2555956, 31, 0, 2555957, 31, 0, 2555958, 31, 0, 2555959, 31, 0, 2555960, 31, 0, 2555961, 31, 0, 2555962, 31, 0, 2555963, 31, 0, 2555964, 31, 0, 2555965, 31, 0, 2555966, 31, 0, 2555967, 31, 0, 2555968, 31, 0, 2555969, 31, 0, 2555970, 31, 0, 2555971, 31, 0, 2555972, 31, 0, 2555973, 31, 0, 2555974, 31, 0, 2555975, 31, 0, 2555976, 31, 0, 2555977, 33, 0, 2686965, 3, 0, 2686966, 3, 0, 2686967, 3, 0, 2686968, 3, 0, 2686969, 3, 0, 2686970, 3, 0, 2686971, 3, 0, 2686972, 3, 0, 2686973, 3, 0, 2686974, 3, 0, 2686975, 3, 0, 2621440, 3, 0, 2621441, 3, 0, 2621442, 3, 0, 2621443, 3, 0, 2621444, 3, 0, 2621445, 3, 0, 2621446, 3, 0, 2621447, 3, 0, 2621448, 3, 0, 2621449, 3, 0, 2621450, 3, 0, 2621451, 3, 0, 2621452, 3, 0, 2621453, 3, 0, 2621454, 3, 0, 2621455, 3, 0, 2621456, 3, 0, 2621459, 3, 0, 2621460, 3, 0, 2621461, 3, 0, 2621462, 7, 0, 2621473, 13, 0, 2621474, 13, 0, 2621475, 13, 0, 2621476, 13, 0, 2621477, 13, 0, 2621478, 13, 0, 2621479, 13, 0, 2621480, 13, 0, 2621481, 13, 0, 2621491, 32, 0, 2621492, 31, 0, 2621493, 31, 0, 2621494, 31, 0, 2621495, 31, 0, 2621496, 31, 0, 2621497, 31, 0, 2621498, 31, 0, 2621499, 31, 0, 2621500, 31, 0, 2621501, 31, 0, 2621502, 31, 0, 2621503, 31, 0, 2621504, 31, 0, 2621505, 31, 0, 2621506, 31, 0, 2621507, 31, 0, 2621508, 31, 0, 2621509, 31, 0, 2621510, 31, 0, 2621511, 31, 0, 2621512, 31, 0, 2621513, 33, 0, 2752501, 4, 0, 2752502, 4, 0, 2752503, 4, 0, 2752504, 4, 0, 2752505, 4, 0, 2752506, 4, 0, 2752507, 4, 0, 2752508, 4, 0, 2752509, 4, 0, 2752510, 4, 0, 2752511, 4, 0, 2686976, 4, 0, 2686977, 4, 0, 2686978, 4, 0, 2686979, 4, 0, 2686980, 4, 0, 2686981, 4, 0, 2686982, 4, 0, 2686983, 4, 0, 2686984, 4, 0, 2686985, 4, 0, 2686986, 4, 0, 2686987, 4, 0, 2686988, 4, 0, 2686989, 4, 0, 2686990, 4, 0, 2686991, 4, 0, 2686992, 4, 0, 2686993, 4, 0, 2686994, 4, 0, 2686995, 4, 0, 2686996, 4, 0, 2686997, 4, 0, 2686998, 8, 0, 2687009, 16, 0, 2687010, 16, 0, 2687011, 16, 0, 2687012, 16, 0, 2687013, 16, 0, 2687014, 16, 0, 2687015, 16, 0, 2687016, 16, 0, 2687017, 16, 0, 2687027, 29, 0, 2687028, 35, 0, 2687029, 35, 0, 2687030, 35, 0, 2687031, 35, 0, 2687032, 35, 0, 2687033, 35, 0, 2687034, 35, 0, 2687035, 35, 0, 2687036, 35, 0, 2687037, 35, 0, 2687038, 35, 0, 2687039, 35, 0, 2687040, 35, 0, 2687041, 35, 0, 2687042, 35, 0, 2687043, 35, 0, 2687044, 35, 0, 2687045, 35, 0, 2687046, 35, 0, 2687047, 35, 0, 2687048, 35, 0, 2687049, 30, 0 )
+
+[node name="Emma" parent="." instance=ExtResource( 25 )]
+position = Vector2( -15, 644 )
+
+[node name="Mitch" parent="." instance=ExtResource( 26 )]
+position = Vector2( -36, 645 )
+
+[node name="Wiger" parent="." instance=ExtResource( 27 )]
+position = Vector2( -58, 645 )
+
+[node name="ColorRect3" type="ColorRect" parent="."]
+margin_left = -179.0
+margin_top = 1015.0
+margin_right = 904.0
+margin_bottom = 1344.0
+mouse_filter = 2
+color = Color( 0, 0.141176, 0.623529, 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="OutsideTiles" parent="." instance=ExtResource( 24 )]
+tile_data = PoolIntArray( 4915211, 32, 0, 4915212, 36, 0, 4915213, 36, 0, 4915214, 36, 0, 4915215, 36, 0, 4915216, 36, 0, 4915217, 36, 0, 4915218, 36, 0, 4915219, 36, 0, 4915220, 36, 0, 4915221, 36, 0, 4915222, 36, 0, 4915223, 36, 0, 4915224, 36, 0, 4915225, 36, 0, 4915226, 36, 0, 4915227, 36, 0, 4915228, 36, 0, 4915229, 536870944, 0, 4980747, 34, 0, 4980748, 536870950, 0, 4980749, 37, 0, 4980750, 37, 0, 4980751, 37, 0, 4980752, 37, 0, 4980753, 37, 0, 4980754, 37, 0, 4980755, 37, 0, 4980756, 37, 0, 4980757, 37, 0, 4980758, 37, 0, 4980759, 37, 0, 4980760, 37, 0, 4980761, 37, 0, 4980762, 37, 0, 4980763, 37, 0, 4980764, 37, 0, 4980765, 40, 0, 5046283, 33, 0, 5046284, 37, 0, 5046285, 37, 0, 5046286, 37, 0, 5046287, 536870950, 0, 5046288, 37, 0, 5046289, 37, 0, 5046290, 37, 0, 5046291, 37, 0, 5046292, 37, 0, 5046293, 37, 0, 5046294, 37, 0, 5046295, 37, 0, 5046296, 37, 0, 5046297, 37, 0, 5046298, 37, 0, 5046299, 37, 0, 5046300, 37, 0, 5046301, 536870945, 0, 5111819, 536870952, 0, 5111820, 37, 0, 5111821, 37, 0, 5111822, 37, 0, 5111823, 37, 0, 5111824, 37, 0, 5111825, 37, 0, 5111826, 37, 0, 5111827, 37, 0, 5111828, 37, 0, 5111829, 37, 0, 5111830, 37, 0, 5111831, 37, 0, 5111832, 37, 0, 5111833, 37, 0, 5111834, 38, 0, 5111835, 37, 0, 5111836, 37, 0, 5111837, 536870946, 0, 5177355, 35, 0, 5177356, 39, 0, 5177357, 39, 0, 5177358, 39, 0, 5177359, 39, 0, 5177360, 39, 0, 5177361, 39, 0, 5177362, 39, 0, 5177363, 39, 0, 5177364, 39, 0, 5177365, 39, 0, 5177366, 39, 0, 5177367, 39, 0, 5177368, 39, 0, 5177369, 39, 0, 5177370, 39, 0, 5177371, 39, 0, 5177372, 39, 0, 5177373, 536870947, 0, 5242892, 536870922, 0, 5242893, 9, 0, 5242894, 9, 0, 5242895, 9, 0, 5242896, 9, 0, 5242897, 9, 0, 5242898, 9, 0, 5242899, 9, 0, 5242900, 9, 0, 5242901, 536870918, 0, 5242902, 9, 0, 5242903, 9, 0, 5242904, 9, 0, 5242905, 9, 0, 5242906, 9, 0, 5242907, 9, 0, 5242908, 10, 0, 5242909, 25, 0, 5242910, 29, 0, 5242911, 30, 0, 5308428, 536870919, 0, 5308429, 9, 0, 5308430, 9, 0, 5308431, 9, 0, 5308432, 9, 0, 5308433, 6, 0, 5308434, 9, 0, 5308435, 9, 0, 5308436, 9, 0, 5308437, 9, 0, 5308438, 9, 0, 5308439, 9, 0, 5308440, 9, 0, 5308441, 9, 0, 5308442, 9, 0, 5308443, 9, 0, 5308444, 536870920, 0, 5308445, 23, 0, 5308446, 23, 0, 5308447, 27, 0, 5373964, 5, 0, 5373965, 9, 0, 5373966, 9, 0, 5373967, 9, 0, 5373968, 9, 0, 5373969, 9, 0, 5373970, 9, 0, 5373971, 9, 0, 5373972, 9, 0, 5373973, 9, 0, 5373974, 9, 0, 5373975, 9, 0, 5373976, 6, 0, 5373977, 9, 0, 5373978, 9, 0, 5373979, 9, 0, 5373980, 7, 0, 5373981, 23, 0, 5373982, 23, 0, 5373983, 27, 0, 5439500, 0, 0, 5439501, 3, 0, 5439502, 3, 0, 5439503, 3, 0, 5439504, 3, 0, 5439505, 3, 0, 5439506, 3, 0, 5439507, 3, 0, 5439508, 3, 0, 5439509, 3, 0, 5439510, 3, 0, 5439511, 3, 0, 5439512, 3, 0, 5439513, 3, 0, 5439514, 3, 0, 5439515, 3, 0, 5439516, 1, 0, 5439517, 23, 0, 5439518, 26, 0, 5439519, 27, 0, 5505024, 56, 0, 5505025, 56, 0, 5505026, 56, 0, 5505027, 57, 0, 5505028, 55, 0, 5505029, 56, 0, 5505030, 56, 0, 5505031, 56, 0, 5505032, 56, 0, 5505033, 55, 0, 5505034, 55, 0, 5505035, 55, 0, 5505036, 56, 0, 5505037, 57, 0, 5505038, 56, 0, 5505039, 56, 0, 5505040, 56, 0, 5505041, 56, 0, 5505042, 56, 0, 5505043, 56, 0, 5505044, 56, 0, 5505045, 56, 0, 5505046, 57, 0, 5505047, 56, 0, 5505048, 56, 0, 5505049, 56, 0, 5505050, 55, 0, 5505051, 56, 0, 5505052, 56, 0, 5505053, 56, 0, 5505054, 56, 0, 5505055, 55, 0, 5505056, 56, 0, 5505057, 56, 0, 5505058, 56, 0, 5505059, 57, 0, 5505060, 57, 0, 5505061, 56, 0, 5505062, 55, 0, 5505063, 55, 0, 5505064, 56, 0, 5505065, 56, 0, 5505066, 57, 0, 5505067, 56, 0, 5505068, 56, 0, 5505069, 55, 0, 5505070, 56, 0 )
+
+[node name="ColorRect3" type="ColorRect" parent="OutsideTiles"]
+margin_left = 355.0
+margin_top = 1299.0
+margin_right = 381.0
+margin_bottom = 1325.0
+color = Color( 0, 0, 0, 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="OutsideWindowGlass2" type="Sprite" parent="OutsideTiles"]
+position = Vector2( 281, 1311 )
+texture = ExtResource( 28 )
+
+[node name="OutsideWindowGlass2Broken" type="Sprite" parent="OutsideTiles"]
+position = Vector2( 368, 1311 )
+texture = ExtResource( 29 )
+
+[node name="Outside Shadows" parent="." instance=ExtResource( 24 )]
+tile_data = PoolIntArray( 5242892, 54, 0, 5242893, 54, 0, 5242894, 54, 0, 5242895, 54, 0, 5242896, 54, 0, 5242897, 54, 0, 5242898, 54, 0, 5242899, 54, 0, 5242900, 54, 0, 5242901, 54, 0, 5242902, 54, 0, 5242903, 54, 0, 5242904, 54, 0, 5242905, 54, 0, 5242906, 54, 0, 5242907, 54, 0, 5242908, 54, 0 )
+
+[node name="Outside Props" parent="." instance=ExtResource( 24 )]
+tile_data = PoolIntArray( 5439497, 536870962, 0, 5439504, 41, 0, 5439506, 536870959, 0, 5439511, 48, 0, 5439518, 536870957, 0 )
+
+[node name="FrontDoor_TrashCan" parent="." instance=ExtResource( 22 )]
+position = Vector2( 427, 1334 )
+
+[node name="Sprite" parent="FrontDoor_TrashCan" index="1"]
+material = SubResource( 8 )
+
+[node name="Position2D" parent="FrontDoor_TrashCan" index="2"]
+position = Vector2( 0, -26 )
+
+[node name="Door" parent="." instance=ExtResource( 12 )]
+position = Vector2( 324, 1320 )
+
+[node name="Spawn" parent="Door" index="2"]
+position = Vector2( -98, -682 )
+
+[node name="ColorRect2" type="ColorRect" parent="."]
+margin_top = 672.0
+margin_right = 366.0
+margin_bottom = 712.0
+color = Color( 0, 0, 0, 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Deco" type="Node2D" parent="."]
+
+[node name="Poster" parent="Deco" instance=ExtResource( 8 )]
+position = Vector2( 114, 624 )
+rotation = -0.065249
+
+[node name="Window" type="Sprite" parent="Deco"]
+position = Vector2( 288, 638.1 )
+texture = ExtResource( 6 )
+
+[node name="Bed" type="Sprite" parent="Deco"]
+position = Vector2( 40, 654 )
+texture = ExtResource( 3 )
+
+[node name="Computer-desk" type="Sprite" parent="Deco"]
+position = Vector2( 114, 651 )
+texture = ExtResource( 4 )
+
+[node name="Door3" parent="Deco" instance=ExtResource( 12 )]
+position = Vector2( 612, 642 )
+
+[node name="Sprite" parent="Deco/Door3" index="1"]
+material = SubResource( 4 )
+
+[node name="Spawn" parent="Deco/Door3" index="2"]
+position = Vector2( 480, 16 )
+
+[node name="Door6" parent="Deco" instance=ExtResource( 12 )]
+position = Vector2( 1092, 647 )
+
+[node name="Sprite" parent="Deco/Door6" index="1"]
+material = SubResource( 4 )
+
+[node name="Spawn" parent="Deco/Door6" index="2"]
+position = Vector2( -480, 11 )
+
+[node name="Door4" parent="Deco" instance=ExtResource( 12 )]
+position = Vector2( 556, 642 )
+
+[node name="Sprite" parent="Deco/Door4" index="1"]
+material = SubResource( 5 )
+
+[node name="Spawn" parent="Deco/Door4" index="2"]
+position = Vector2( -231, 16 )
+
+[node name="Cupboard-small" type="Sprite" parent="Deco"]
+position = Vector2( 1039, 623 )
+texture = ExtResource( 10 )
+
+[node name="Cupboard" type="Sprite" parent="Deco"]
+position = Vector2( 1047, 664 )
+texture = ExtResource( 13 )
+
+[node name="Dishes" type="Sprite" parent="Deco"]
+position = Vector2( 939, 650 )
+texture = ExtResource( 14 )
+
+[node name="Dishwasher" type="Sprite" parent="Deco"]
+position = Vector2( 881, 660 )
+texture = ExtResource( 9 )
+
+[node name="Fridge" type="Sprite" parent="Deco"]
+position = Vector2( 851, 654 )
+texture = ExtResource( 11 )
+
+[node name="Microwave" type="Sprite" parent="Deco"]
+position = Vector2( 1033, 652 )
+texture = ExtResource( 16 )
+
+[node name="Sink" type="Sprite" parent="Deco"]
+position = Vector2( 927, 658 )
+texture = ExtResource( 20 )
+
+[node name="Stove" type="Sprite" parent="Deco"]
+position = Vector2( 1006, 660 )
+texture = ExtResource( 18 )
+
+[node name="Toaster" type="Sprite" parent="Deco"]
+position = Vector2( 1050, 653 )
+texture = ExtResource( 21 )
+
+[node name="Countertop" type="Sprite" parent="Deco"]
+position = Vector2( 1047, 658 )
+texture = ExtResource( 19 )
+
+[node name="Trashcan" type="Sprite" parent="Deco"]
+position = Vector2( 972, 666 )
+texture = ExtResource( 15 )
+
+[node name="Toilet" parent="Deco" instance=ExtResource( 23 )]
+position = Vector2( 162, 657 )
+
+[node name="Player" parent="." instance=ExtResource( 1 )]
+position = Vector2( 344, 1060 )
+
+[node name="Outside Toplayer" parent="." instance=ExtResource( 24 )]
+tile_data = PoolIntArray( 5439498, 45, 0, 5439499, 46, 0, 5439500, 43, 0, 5439501, 59, 0, 5439506, 536870972, 0, 5439512, 536870971, 0, 5439513, 47, 0, 5439515, 59, 0, 5439516, 42, 0, 5439517, 44, 0 )
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+position = Vector2( 0, 695 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2( 488, -13 )
+shape = SubResource( 3 )
+
+[node name="StaticBody2D2" type="StaticBody2D" parent="."]
+position = Vector2( -3, 1366 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D2"]
+position = Vector2( 489, -12 )
+shape = SubResource( 3 )
+
+[node name="Barricade" type="Sprite" parent="."]
+position = Vector2( 14, 1325 )
+texture = ExtResource( 5 )
+
+[node name="StaticBody2D" type="StaticBody2D" parent="Barricade"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Barricade/StaticBody2D"]
+position = Vector2( 0.5, -0.5 )
+shape = SubResource( 6 )
+
+[editable path="FrontDoor_TrashCan"]
+[editable path="Door"]
+[editable path="Deco/Door3"]
+[editable path="Deco/Door6"]
+[editable path="Deco/Door4"]
