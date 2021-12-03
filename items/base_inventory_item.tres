@@ -4,5 +4,6 @@
 
 [resource]
 script = ExtResource( 1 )
+item_id = ""
 title = ""
 description = ""

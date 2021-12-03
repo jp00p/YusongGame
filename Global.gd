@@ -2,12 +2,16 @@ extends Node
 
 signal item_added(item)
 signal item_removed(item)
+signal set_secondary_text(message)
 
 var hovered_item_name = "" setget set_hovered_item_name
 
 var look_mode = false
 var use_mode = false
 var take_mode = false
+var give_mode = false
+var talk_mode = false
+var use_item = null
 
 signal hovered_item_name(item_text)
 
@@ -51,6 +55,13 @@ func set_player_movement(can_move):
 	var player = get_player()
 	player.set_physics_process(can_move)
 
+func player_speak(message):
+	var player = get_player()
+	player.talk(message)
+	
+func set_secondary_text(message):
+	emit_signal("set_secondary_text", message)
+
 func toggle_looking(is_looking):
 	look_mode = is_looking
 	# set cursor
@@ -78,6 +89,10 @@ func reset_mode():
 	look_mode = false
 	use_mode = false
 	take_mode = false
+	talk_mode = false
+	give_mode = false
+	use_item = null
+	set_secondary_text("")
 	set_cursor("normal")
 	set_player_movement(true)
 
@@ -87,4 +102,8 @@ func set_hovered_item_name(val):
 func add_inventory_item(item):
 	inventory.push_front(item)
 	emit_signal("item_added", item)
-	print(inventory)
+	
+func remove_inventory_item(item):
+	var to_remove = inventory.find(item)
+	inventory.remove(to_remove)
+	emit_signal("item_removed", item)

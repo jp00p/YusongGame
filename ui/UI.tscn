@@ -27,11 +27,26 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ItemName" type="Label" parent="Top"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Top"]
 anchor_right = 1.0
-margin_bottom = 14.0
+anchor_bottom = 1.0
+
+[node name="ItemName" type="Label" parent="Top/VBoxContainer"]
+margin_right = 512.0
+margin_bottom = 19.0
 size_flags_horizontal = 3
 text = "Item Name"
+align = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="SecondaryTopText" type="Label" parent="Top/VBoxContainer"]
+margin_top = 23.0
+margin_right = 512.0
+margin_bottom = 42.0
+size_flags_horizontal = 3
+text = "Secondary Text"
 align = 1
 __meta__ = {
 "_edit_use_anchors_": false

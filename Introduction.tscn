@@ -1,0 +1,45 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://ui/UITheme.tres" type="Theme" id=1]
+
+[node name="Introduction" type="Control"]
+theme = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label" type="Label" parent="."]
+margin_right = 40.0
+margin_bottom = 19.0
+text = "The year is 20XX"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label2" type="Label" parent="."]
+margin_top = 40.0
+margin_right = 117.0
+margin_bottom = 59.0
+text = "The Podcast Wars are over. 
+Hollywood Handbook has won.
+
+One by one
+the great podcasts fell
+the networks dissolved
+the patrons poached
+the paywalls torn down
+even Conan was no match
+the Doughboys were the last to topple
+and with them all hope was snuffed from the world
+
+The ruined rubble of Earth's great cities provides some shelter for the remnants of humanity. 
+Living is rough, the water is poisoned, and the acoustics are terrible.
+
+And in those ruins, huddled around fires lit in barrels, people whisper about a chosen one.
+
+They speak the name of a ghost...
+
+YUSONG"
+__meta__ = {
+"_edit_use_anchors_": false
+}

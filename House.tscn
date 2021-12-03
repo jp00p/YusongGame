@@ -11,11 +11,12 @@
 [ext_resource path="res://assets/dishwasher.png" type="Texture" id=9]
 [ext_resource path="res://assets/cupboard-small.png" type="Texture" id=10]
 [ext_resource path="res://assets/fridge.png" type="Texture" id=11]
-[ext_resource path="res://Door.tscn" type="PackedScene" id=12]
+[ext_resource path="res://items/doors/FrontEntrance.tscn" type="PackedScene" id=12]
 [ext_resource path="res://assets/cupboard.png" type="Texture" id=13]
 [ext_resource path="res://assets/dishes.png" type="Texture" id=14]
 [ext_resource path="res://assets/trashcan.png" type="Texture" id=15]
 [ext_resource path="res://assets/microwave.png" type="Texture" id=16]
+[ext_resource path="res://items/OutsideTrashCan_Empty.tscn" type="PackedScene" id=17]
 [ext_resource path="res://assets/stove.png" type="Texture" id=18]
 [ext_resource path="res://assets/countertop.png" type="Texture" id=19]
 [ext_resource path="res://assets/sink.png" type="Texture" id=20]
@@ -28,6 +29,80 @@
 [ext_resource path="res://characters/Wiger.tscn" type="PackedScene" id=27]
 [ext_resource path="res://assets/outside_window_glass2.png" type="Texture" id=28]
 [ext_resource path="res://assets/outside_window_glass2_broken.png" type="Texture" id=29]
+
+[sub_resource type="Shader" id=9]
+resource_local_to_scene = true
+code = "shader_type canvas_item;
+
+uniform vec4 color : hint_color = vec4(1.0);
+uniform float width : hint_range(0, 10) = 1.0;
+uniform int pattern : hint_range(0, 2) = 0; // diamond, circle, square
+uniform bool inside = false;
+uniform bool add_margins = true; // only useful when inside is false
+
+void vertex() {
+	if (add_margins) {
+		VERTEX += (UV * 2.0 - 1.0) * width;
+	}
+}
+
+bool hasContraryNeighbour(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
+	for (float i = -ceil(width); i <= ceil(width); i++) {
+		float x = abs(i) > width ? width * sign(i) : i;
+		float offset;
+		
+		if (pattern == 0) {
+			offset = width - abs(x);
+		} else if (pattern == 1) {
+			offset = floor(sqrt(pow(width + 0.5, 2) - x * x));
+		} else if (pattern == 2) {
+			offset = width;
+		}
+		
+		for (float j = -ceil(offset); j <= ceil(offset); j++) {
+			float y = abs(j) > offset ? offset * sign(j) : j;
+			vec2 xy = uv + texture_pixel_size * vec2(x, y);
+			
+			if ((xy != clamp(xy, vec2(0.0), vec2(1.0)) || texture(texture, xy).a == 0.0) == inside) {
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+void fragment() {
+	vec2 uv = UV;
+	
+	if (add_margins) {
+		vec2 texture_pixel_size = vec2(1.0) / (vec2(1.0) / TEXTURE_PIXEL_SIZE + vec2(width * 2.0));
+		
+		uv = (uv - texture_pixel_size * width) * TEXTURE_PIXEL_SIZE / texture_pixel_size;
+		
+		if (uv != clamp(uv, vec2(0.0), vec2(1.0))) {
+			COLOR.a = 0.0;
+		} else {
+			COLOR = texture(TEXTURE, uv);
+		}
+	} else {
+		COLOR = texture(TEXTURE, uv);
+	}
+	
+	if ((COLOR.a > 0.0) == inside && hasContraryNeighbour(uv, TEXTURE_PIXEL_SIZE, TEXTURE)) {
+		COLOR.rgb = inside ? mix(COLOR.rgb, color.rgb, color.a) : color.rgb;
+		COLOR.a += (1.0 - COLOR.a) * color.a;
+	}
+}"
+
+[sub_resource type="ShaderMaterial" id=10]
+resource_local_to_scene = true
+shader = SubResource( 9 )
+shader_param/color = Color( 1, 1, 1, 1 )
+shader_param/width = 0.0
+shader_param/pattern = 0
+shader_param/inside = false
+shader_param/add_margins = true
 
 [sub_resource type="Shader" id=7]
 resource_local_to_scene = true
@@ -103,86 +178,6 @@ shader_param/pattern = 0
 shader_param/inside = false
 shader_param/add_margins = true
 
-[sub_resource type="Shader" id=1]
-code = "shader_type canvas_item;
-
-uniform vec4 color : hint_color = vec4(1.0);
-uniform float width : hint_range(0, 10) = 1.0;
-uniform int pattern : hint_range(0, 2) = 0; // diamond, circle, square
-uniform bool inside = false;
-uniform bool add_margins = true; // only useful when inside is false
-
-void vertex() {
-	if (add_margins) {
-		VERTEX += (UV * 2.0 - 1.0) * width;
-	}
-}
-
-bool hasContraryNeighbour(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
-	for (float i = -ceil(width); i <= ceil(width); i++) {
-		float x = abs(i) > width ? width * sign(i) : i;
-		float offset;
-		
-		if (pattern == 0) {
-			offset = width - abs(x);
-		} else if (pattern == 1) {
-			offset = floor(sqrt(pow(width + 0.5, 2) - x * x));
-		} else if (pattern == 2) {
-			offset = width;
-		}
-		
-		for (float j = -ceil(offset); j <= ceil(offset); j++) {
-			float y = abs(j) > offset ? offset * sign(j) : j;
-			vec2 xy = uv + texture_pixel_size * vec2(x, y);
-			
-			if ((xy != clamp(xy, vec2(0.0), vec2(1.0)) || texture(texture, xy).a == 0.0) == inside) {
-				return true;
-			}
-		}
-	}
-	
-	return false;
-}
-
-void fragment() {
-	vec2 uv = UV;
-	
-	if (add_margins) {
-		vec2 texture_pixel_size = vec2(1.0) / (vec2(1.0) / TEXTURE_PIXEL_SIZE + vec2(width * 2.0));
-		
-		uv = (uv - texture_pixel_size * width) * TEXTURE_PIXEL_SIZE / texture_pixel_size;
-		
-		if (uv != clamp(uv, vec2(0.0), vec2(1.0))) {
-			COLOR.a = 0.0;
-		} else {
-			COLOR = texture(TEXTURE, uv);
-		}
-	} else {
-		COLOR = texture(TEXTURE, uv);
-	}
-	
-	if ((COLOR.a > 0.0) == inside && hasContraryNeighbour(uv, TEXTURE_PIXEL_SIZE, TEXTURE)) {
-		COLOR.rgb = inside ? mix(COLOR.rgb, color.rgb, color.a) : color.rgb;
-		COLOR.a += (1.0 - COLOR.a) * color.a;
-	}
-}"
-
-[sub_resource type="ShaderMaterial" id=4]
-shader = SubResource( 1 )
-shader_param/color = Color( 1, 0, 0.701961, 1 )
-shader_param/width = 0.0
-shader_param/pattern = 1
-shader_param/inside = false
-shader_param/add_margins = true
-
-[sub_resource type="ShaderMaterial" id=5]
-shader = SubResource( 1 )
-shader_param/color = Color( 1, 0, 0.701961, 1 )
-shader_param/width = 0.0
-shader_param/pattern = 1
-shader_param/inside = false
-shader_param/add_margins = true
-
 [sub_resource type="RectangleShape2D" id=3]
 extents = Vector2( 712, 10 )
 
@@ -190,6 +185,7 @@ extents = Vector2( 712, 10 )
 extents = Vector2( 10.5, 18.5 )
 
 [node name="House" type="Node2D"]
+position = Vector2( 60, 360 )
 
 [node name="ColorRect" type="ColorRect" parent="."]
 margin_left = 201.0
@@ -209,12 +205,15 @@ tile_data = PoolIntArray( 2490357, 1, 0, 2490358, 1, 0, 2490359, 1, 0, 2490360, 
 
 [node name="Emma" parent="." instance=ExtResource( 25 )]
 position = Vector2( -15, 644 )
+frame = 0
 
 [node name="Mitch" parent="." instance=ExtResource( 26 )]
 position = Vector2( -36, 645 )
+frame = 1
 
 [node name="Wiger" parent="." instance=ExtResource( 27 )]
 position = Vector2( -58, 645 )
+frame = 0
 
 [node name="ColorRect3" type="ColorRect" parent="."]
 margin_left = -179.0
@@ -254,20 +253,44 @@ tile_data = PoolIntArray( 5242892, 54, 0, 5242893, 54, 0, 5242894, 54, 0, 524289
 [node name="Outside Props" parent="." instance=ExtResource( 24 )]
 tile_data = PoolIntArray( 5439497, 536870962, 0, 5439504, 41, 0, 5439506, 536870959, 0, 5439511, 48, 0, 5439518, 536870957, 0 )
 
-[node name="FrontDoor_TrashCan" parent="." instance=ExtResource( 22 )]
-position = Vector2( 427, 1334 )
+[node name="OutsideFrontItems" type="Node2D" parent="."]
 
-[node name="Sprite" parent="FrontDoor_TrashCan" index="1"]
-material = SubResource( 8 )
-
-[node name="Position2D" parent="FrontDoor_TrashCan" index="2"]
-position = Vector2( 0, -26 )
-
-[node name="Door" parent="." instance=ExtResource( 12 )]
+[node name="FrontEntrance" parent="OutsideFrontItems" instance=ExtResource( 12 )]
 position = Vector2( 324, 1320 )
 
-[node name="Spawn" parent="Door" index="2"]
-position = Vector2( -98, -682 )
+[node name="Sprite" parent="OutsideFrontItems/FrontEntrance" index="1"]
+material = SubResource( 10 )
+
+[node name="Spawn" parent="OutsideFrontItems/FrontEntrance" index="2"]
+position = Vector2( -112, -674 )
+
+[node name="FrontDoor_TrashCan" parent="OutsideFrontItems" instance=ExtResource( 22 )]
+position = Vector2( 160, 1331 )
+
+[node name="Sprite" parent="OutsideFrontItems/FrontDoor_TrashCan" index="1"]
+material = SubResource( 8 )
+
+[node name="Position2D" parent="OutsideFrontItems/FrontDoor_TrashCan" index="2"]
+position = Vector2( 0, -26 )
+
+[node name="DoorTimer" parent="OutsideFrontItems/FrontDoor_TrashCan" index="4"]
+wait_time = 1.0
+one_shot = false
+
+[node name="OutsideTrashCan_Empty" parent="OutsideFrontItems" instance=ExtResource( 17 )]
+position = Vector2( 506, 1332 )
+
+[node name="OutsideTrashCan_Empty2" parent="OutsideFrontItems" instance=ExtResource( 17 )]
+position = Vector2( 285, 1331 )
+
+[node name="OutsideTrashCan_Empty3" parent="OutsideFrontItems" instance=ExtResource( 17 )]
+position = Vector2( 210, 1332 )
+
+[node name="OutsideTrashCan_Empty4" parent="OutsideFrontItems" instance=ExtResource( 17 )]
+position = Vector2( 143, 1331 )
+
+[node name="OutsideTrashCan_Empty5" parent="OutsideFrontItems" instance=ExtResource( 17 )]
+position = Vector2( 401, 1331 )
 
 [node name="ColorRect2" type="ColorRect" parent="."]
 margin_top = 672.0
@@ -281,7 +304,7 @@ __meta__ = {
 [node name="Deco" type="Node2D" parent="."]
 
 [node name="Poster" parent="Deco" instance=ExtResource( 8 )]
-position = Vector2( 114, 624 )
+position = Vector2( 112, 625 )
 rotation = -0.065249
 
 [node name="Window" type="Sprite" parent="Deco"]
@@ -295,33 +318,6 @@ texture = ExtResource( 3 )
 [node name="Computer-desk" type="Sprite" parent="Deco"]
 position = Vector2( 114, 651 )
 texture = ExtResource( 4 )
-
-[node name="Door3" parent="Deco" instance=ExtResource( 12 )]
-position = Vector2( 612, 642 )
-
-[node name="Sprite" parent="Deco/Door3" index="1"]
-material = SubResource( 4 )
-
-[node name="Spawn" parent="Deco/Door3" index="2"]
-position = Vector2( 480, 16 )
-
-[node name="Door6" parent="Deco" instance=ExtResource( 12 )]
-position = Vector2( 1092, 647 )
-
-[node name="Sprite" parent="Deco/Door6" index="1"]
-material = SubResource( 4 )
-
-[node name="Spawn" parent="Deco/Door6" index="2"]
-position = Vector2( -480, 11 )
-
-[node name="Door4" parent="Deco" instance=ExtResource( 12 )]
-position = Vector2( 556, 642 )
-
-[node name="Sprite" parent="Deco/Door4" index="1"]
-material = SubResource( 5 )
-
-[node name="Spawn" parent="Deco/Door4" index="2"]
-position = Vector2( -231, 16 )
 
 [node name="Cupboard-small" type="Sprite" parent="Deco"]
 position = Vector2( 1039, 623 )
@@ -368,7 +364,7 @@ position = Vector2( 972, 666 )
 texture = ExtResource( 15 )
 
 [node name="Toilet" parent="Deco" instance=ExtResource( 23 )]
-position = Vector2( 162, 657 )
+position = Vector2( 184, 658 )
 
 [node name="Player" parent="." instance=ExtResource( 1 )]
 position = Vector2( 344, 1060 )
@@ -400,8 +396,5 @@ texture = ExtResource( 5 )
 position = Vector2( 0.5, -0.5 )
 shape = SubResource( 6 )
 
-[editable path="FrontDoor_TrashCan"]
-[editable path="Door"]
-[editable path="Deco/Door3"]
-[editable path="Deco/Door6"]
-[editable path="Deco/Door4"]
+[editable path="OutsideFrontItems/FrontEntrance"]
+[editable path="OutsideFrontItems/FrontDoor_TrashCan"]

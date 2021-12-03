@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource( 1 )
+item_id = "house_key"
 icon = ExtResource( 2 )
 title = "House Key"
 description = "The key to the derelict Doughboys compound"
